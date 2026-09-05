@@ -39,7 +39,8 @@ const FILES = [
     { file: 'Zhytomyrska.json', color: '#50c878', stroke: '#1e7b34' },   // Зелений
     { file: 'Vinnytska.json', color: '#9b59b6', stroke: '#5b2c6f' },      // Фіолетовий
     { file: 'Cherkaska.json', color: '#f39c12', stroke: '#935116' },      // Помаранчевий
-    { file: 'Kirovohradska.json', color: '#e74c3c', stroke: '#78281f' }   // Червоний
+    { file: 'Kirovohradska.json', color: '#e74c3c', stroke: '#78281f' },   // Червоний
+    { file: 'Khmelnytska.json', color: '#3cb4e7', stroke: '#147eab' }   // Неоновий
 ];
 
 function MapRecenter({ center }) {
