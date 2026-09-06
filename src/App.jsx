@@ -3,8 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap, Pane } from 'r
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-import { SOIL_GROUPS, SPECIFIC_SOIL_OVERRIDES, DEFAULT_SOIL_STYLE } from './soil.config.js';
-
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
 
@@ -45,11 +43,6 @@ const HROMADA_FILES = [
     { file: 'Khmelnytska.json', color: '#3cb4e7', stroke: '#147eab' }    // Неоновий
 ];
 
-// Масив файлів ґрунтів (легко розширювати іншими областями)
-const SOIL_FILES = [
-    { file: 'Cherkaska_soils.json' }
-];
-
 function MapRecenter({ center }) {
     const map = useMap();
     useEffect(() => {
@@ -65,12 +58,14 @@ export default function App() {
     const [coordsInput, setCoordsInput] = useState('');
     const [selectedCoords, setSelectedCoords] = useState(null);
     const [geoJsonData, setGeoJsonData] = useState(null);
-    const [soilsData, setSoilsData] = useState(null);
     const [ownedPlots, setOwnedPlots] = useState([]);
 
-    // Режим перегляду: 'hromadas' або 'soils' (зберігається в localStorage)
+    // Режими карт: 'osm', 'google', 'esri'
     const [activeMode, setActiveMode] = useState(() => {
-        return localStorage.getItem('map_mode') || 'hromadas';
+        const saved = localStorage.getItem('map_mode');
+        if (saved === 'hybrid' || saved === 'google') return 'google';
+        if (saved === 'esri') return 'esri';
+        return 'osm';
     });
 
     const handleModeChange = (mode) => {
@@ -81,7 +76,7 @@ export default function App() {
     useEffect(() => {
         const baseUrl = import.meta.env.BASE_URL;
 
-        // 1. Завантаження геоданих меж громад через Promise.all
+        // Завантаження геоданих меж громад
         Promise.all(
             HROMADA_FILES.map(item =>
                 fetch(`${baseUrl}${item.file}`)
@@ -106,23 +101,7 @@ export default function App() {
             })
             .catch(err => console.error("Помилка завантаження GeoJSON меж громад:", err));
 
-        // 2. Завантаження геоданих ґрунтів через Promise.all (аналогічно громад)
-        Promise.all(
-            SOIL_FILES.map(item =>
-                fetch(`${baseUrl}${item.file}`)
-                    .then(res => res.json())
-                    .then(data => Array.isArray(data) ? data : (data.features || []))
-            )
-        )
-            .then(dataArray => {
-                setSoilsData({
-                    type: 'FeatureCollection',
-                    features: dataArray.flat()
-                });
-            })
-            .catch(err => console.error("Помилка завантаження GeoJSON ґрунтів:", err));
-
-        // 3. Зчитування збережених паїв із localStorage
+        // Зчитування збережених паїв із localStorage
         const savedPlots = localStorage.getItem('my_owned_plots');
         if (savedPlots) {
             try {
@@ -182,46 +161,6 @@ export default function App() {
             opacity: 0.9,
             color: feature?.properties?._stroke || '#34495e',
             fillOpacity: 0.25
-        };
-    };
-
-    // Гнучка функція стилізації полігонів ґрунтів
-    const getSoilStyle = (feature) => {
-        const props = feature?.properties || {};
-        const groupCode = props.group_code || props.soil_code;
-        const specificCode = props.soil_code;
-
-        // 1. Пошук індивідуального відтінку
-        if (specificCode && SPECIFIC_SOIL_OVERRIDES[specificCode]) {
-            const override = SPECIFIC_SOIL_OVERRIDES[specificCode];
-            return {
-                fillColor: override.color,
-                weight: 0.8,
-                opacity: 0.8,
-                color: override.stroke || '#444444',
-                fillOpacity: 0.65
-            };
-        }
-
-        // 2. Пошук за групою (gk1..gk8, gk11)
-        if (groupCode && SOIL_GROUPS[groupCode]) {
-            const group = SOIL_GROUPS[groupCode];
-            return {
-                fillColor: group.color,
-                weight: 0.8,
-                opacity: 0.8,
-                color: group.stroke,
-                fillOpacity: 0.65
-            };
-        }
-
-        // 3. Запасний стиль
-        return {
-            fillColor: DEFAULT_SOIL_STYLE.color,
-            weight: 0.8,
-            opacity: 0.8,
-            color: DEFAULT_SOIL_STYLE.stroke,
-            fillOpacity: 0.5
         };
     };
 
@@ -286,35 +225,46 @@ export default function App() {
                     </button>
                 </form>
 
-                {/* Радіокнопки для вибору режиму перегляду */}
+                {/* Компактний перемикач підложки карти */}
                 <div style={{
                     display: 'flex',
-                    gap: '16px',
+                    gap: '12px',
                     borderTop: '1px solid #eee',
                     paddingTop: '8px',
                     fontSize: '13px',
                     fontWeight: '500'
                 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                         <input
                             type="radio"
                             name="mapMode"
-                            value="hromadas"
-                            checked={activeMode === 'hromadas'}
-                            onChange={() => handleModeChange('hromadas')}
+                            value="osm"
+                            checked={activeMode === 'osm'}
+                            onChange={() => handleModeChange('osm')}
                         />
-                        Межі громад
+                        OSM
                     </label>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
                         <input
                             type="radio"
                             name="mapMode"
-                            value="soils"
-                            checked={activeMode === 'soils'}
-                            onChange={() => handleModeChange('soils')}
+                            value="google"
+                            checked={activeMode === 'google'}
+                            onChange={() => handleModeChange('google')}
                         />
-                        Карта ґрунтів
+                        Google
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="mapMode"
+                            value="esri"
+                            checked={activeMode === 'esri'}
+                            onChange={() => handleModeChange('esri')}
+                        />
+                        Esri
                     </label>
                 </div>
 
@@ -366,43 +316,40 @@ export default function App() {
                 zoom={6}
                 style={{ height: '100%', width: '100%' }}
             >
-                {/* Глобальні панелі Z-Index */}
-                <Pane name="soilsPane" style={{ zIndex: 400 }} />
+                {/* Панелі Z-Index */}
                 <Pane name="adminBoundariesPane" style={{ zIndex: 500 }} />
                 <Pane name="markersPane" style={{ zIndex: 1000 }} />
 
-                {/* Базовий шар OpenStreetMap */}
-                <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy; <a href="https://data.humdata.org/dataset/cod-ab-ukr" target="_blank" rel="noopener noreferrer">OCHA HDX</a>'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-
-                {/* Відображення шару залежно від обраного режиму */}
-                {activeMode === 'soils' && soilsData && (
-                    <GeoJSON
-                        key="soils-geojson"
-                        data={soilsData}
-                        style={getSoilStyle}
-                        pane="soilsPane"
-                        onEachFeature={(feature, layer) => {
-                            const props = feature.properties || {};
-                            const groupInfo = SOIL_GROUPS[props.group_code] || {};
-
-                            const soilName = props.name || groupInfo.name || 'Невизначений тип ґрунту';
-                            const soilCode = props.soil_code || props.group_code || '—';
-
-                            layer.bindPopup(`
-                                <div style="font-size: 13px; max-width: 220px;">
-                                    <b style="color: #1d3557;">Тип ґрунту:</b> ${soilName}<br/>
-                                    <b>Код:</b> <code>${soilCode}</code><br/>
-                                    ${props.group_code ? `<b>Група:</b> ${props.group_code.toUpperCase()}` : ''}
-                                </div>
-                            `);
-                        }}
+                {/* Динамічні підложки з явними ключами для перезавантаження Leaflet layer */}
+                {activeMode === 'osm' && (
+                    <TileLayer
+                        key="osm-layer"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | &copy; <a href="https://data.humdata.org/dataset/cod-ab-ukr" target="_blank" rel="noopener noreferrer">OCHA HDX</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                 )}
 
-                {activeMode === 'hromadas' && geoJsonData && (
+                {activeMode === 'google' && (
+                    <TileLayer
+                        key="google-layer"
+                        attribution='&copy; Google Maps | &copy; <a href="https://data.humdata.org/dataset/cod-ab-ukr" target="_blank" rel="noopener noreferrer">OCHA HDX</a>'
+                        url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                        subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
+                        maxZoom={20}
+                    />
+                )}
+
+                {activeMode === 'esri' && (
+                    <TileLayer
+                        key="esri-layer"
+                        attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community | &copy; <a href="https://data.humdata.org/dataset/cod-ab-ukr" target="_blank" rel="noopener noreferrer">OCHA HDX</a>'
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        maxZoom={19}
+                    />
+                )}
+
+                {/* Шар полігонів громад */}
+                {geoJsonData && (
                     <GeoJSON
                         key="hromadas-geojson"
                         data={geoJsonData}
@@ -412,7 +359,7 @@ export default function App() {
                     />
                 )}
 
-                {/* Маркери куплених паїв (завжди зверху через markersPane з zIndex 1000) */}
+                {/* Маркери паїв */}
                 {ownedPlots.map((plot) => (
                     <Marker
                         key={plot.id || `${plot.lat}-${plot.lng}`}
