@@ -22,18 +22,25 @@ const createPinIcon = (color) => L.divIcon({
     popupAnchor: [0, -22]
 });
 
-// Зелений маркер для паїв, синій — для знайдених точок за координатами
+// Зелений маркер для паїв, червоний — для знайдених точок за координатами
 const ownedPlotIcon = createPinIcon('#2a9d8f');
 const searchedPlotIcon = createPinIcon('#e01919');
 
-// Масив файлів адмін. громад з кольорами для кожної області
+// Координаційні межі території України (Пд-Зх та Пн-Сх кути)
+const UKRAINE_BOUNDS = [
+    [44.03, 22.13], // Південно-західна точка
+    [52.38, 40.22]  // Північно-східна точка
+];
+
+// Масив файлів адмін. громад з контрастною колірною гамою
 const HROMADA_FILES = [
-    { file: 'Kyivska.json', color: '#4a90e2', stroke: '#1d5288' },
-    { file: 'Zhytomyrska.json', color: '#50c878', stroke: '#1e7b34' },
-    { file: 'Vinnytska.json', color: '#9b59b6', stroke: '#5b2c6f' },
-    { file: 'Cherkaska.json', color: '#f39c12', stroke: '#935116' },
-    { file: 'Kirovohradska.json', color: '#e74c3c', stroke: '#78281f' },
-    { file: 'Khmelnytska.json', color: '#3cb4e7', stroke: '#147eab' }
+    { file: 'Kyivska.json', color: '#2563eb', stroke: '#1e40af' },       // Синій
+    { file: 'Zhytomyrska.json', color: '#16a34a', stroke: '#15803d' },   // Зелений
+    { file: 'Vinnytska.json', color: '#9333ea', stroke: '#6b21a8' },      // Фіолетовий
+    { file: 'Cherkaska.json', color: '#ea580c', stroke: '#c2410c' },      // Помаранчевий
+    { file: 'Kirovohradska.json', color: '#dc2626', stroke: '#991b1b' },   // Червоний
+    { file: 'Khmelnytska.json', color: '#0891b2', stroke: '#0e7490' },    // Бірюзовий (Циан)
+    { file: 'Ternopilska.json', color: '#db2777', stroke: '#9d174d' }     // Рожевий (Маджента)
 ];
 
 function MapRecenter({ center }) {
@@ -47,7 +54,7 @@ function MapRecenter({ center }) {
 }
 
 export default function App() {
-    const ukraineCenter = [48.3794, 31.1656];
+    const ukraineCenter = [49.594326, 29.234205];
     const [coordsInput, setCoordsInput] = useState('');
     const [selectedCoords, setSelectedCoords] = useState(null);
     const [geoJsonData, setGeoJsonData] = useState(null);
@@ -130,7 +137,7 @@ export default function App() {
             localStorage.setItem('my_searched_markers', JSON.stringify(updated));
 
             setSelectedCoords([lat, lng]);
-            setCoordsInput(''); // Очищення поля вводу
+            setCoordsInput('');
         } else {
             alert("Введіть коректні координати у форматі: широта, довгота (наприклад: 50.4501, 30.5234)");
         }
@@ -180,7 +187,7 @@ export default function App() {
             weight: 1.5,
             opacity: 0.9,
             color: feature?.properties?._stroke || '#34495e',
-            fillOpacity: 0.25
+            fillOpacity: 0.35
         };
     };
 
@@ -193,7 +200,7 @@ export default function App() {
           ${district ? `<b>Район:</b> ${district}<br/>` : ''}
           ${region ? `<b>Область:</b> ${region}<br/>` : ''}
         </div>
-      `);
+      `, { pane: 'popupsPane' });
         }
     };
 
@@ -333,12 +340,16 @@ export default function App() {
 
             <MapContainer
                 center={ukraineCenter}
-                zoom={6}
+                zoom={7}
+                minZoom={6}
+                maxBounds={UKRAINE_BOUNDS}
+                maxBoundsViscosity={1.0}
                 style={{ height: '100%', width: '100%' }}
             >
                 {/* Панелі Z-Index */}
                 <Pane name="adminBoundariesPane" style={{ zIndex: 500 }} />
                 <Pane name="markersPane" style={{ zIndex: 1000 }} />
+                <Pane name="popupsPane" style={{ zIndex: 1100 }} />
 
                 {/* Динамічні підложки */}
                 {activeMode === 'osm' && (
@@ -387,7 +398,7 @@ export default function App() {
                         icon={ownedPlotIcon}
                         pane="markersPane"
                     >
-                        <Popup>
+                        <Popup pane="popupsPane">
                             <div style={{ fontSize: '14px' }}>
                                 <b style={{ color: '#2a9d8f' }}>{plot.title || 'Куплений пай'}</b><br />
                                 {plot.area && <><b>Площа:</b> {plot.area}<br /></>}
@@ -398,7 +409,7 @@ export default function App() {
                     </Marker>
                 ))}
 
-                {/* Збережені маркери пошуку (темно-сині) */}
+                {/* Збережені маркери пошуку (червоні) */}
                 {searchedMarkers.map((marker) => (
                     <Marker
                         key={marker.id}
@@ -406,7 +417,7 @@ export default function App() {
                         icon={searchedPlotIcon}
                         pane="markersPane"
                     >
-                        <Popup>
+                        <Popup pane="popupsPane">
                             <div style={{ fontSize: '14px', minWidth: '150px' }}>
                                 <b>Координати:</b> {marker.lat}, {marker.lng}<br />
                                 <button
