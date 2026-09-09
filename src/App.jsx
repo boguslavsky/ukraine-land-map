@@ -3,6 +3,8 @@ import { MapContainer, TileLayer, Marker, Popup, GeoJSON, useMap, Pane } from 'r
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+const version = import.meta.env.VITE_BUILD_TIME;
+
 // Фабрика для створення іконки-шпильки будь-якого кольору
 const createPinIcon = (color) => L.divIcon({
     className: 'custom-pin-marker',
@@ -80,7 +82,7 @@ export default function App() {
         // 1. Завантаження геоданих меж громад
         Promise.all(
             HROMADA_FILES.map(item =>
-                fetch(`${baseUrl}${item.file}`)
+                fetch(`${baseUrl}${item.file}?v=${version}`)
                     .then(res => res.json())
                     .then(features =>
                         features.map(feature => ({
