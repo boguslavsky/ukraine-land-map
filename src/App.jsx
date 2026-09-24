@@ -89,7 +89,7 @@ export default function App() {
                             ...feature,
                             properties: {
                                 ...feature.properties,
-                                _color: item.color,
+                                _color: 'transparent', // item.color
                                 _stroke: item.stroke
                             }
                         }))
