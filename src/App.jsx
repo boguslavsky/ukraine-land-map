@@ -36,13 +36,14 @@ const UKRAINE_BOUNDS = [
 
 // Масив файлів адмін. громад з контрастною колірною гамою
 const HROMADA_FILES = [
-    { file: 'Kyivska.json', color: '#2563eb', stroke: '#1e40af' },       // Синій
-    { file: 'Zhytomyrska.json', color: '#16a34a', stroke: '#15803d' },   // Зелений
-    { file: 'Vinnytska.json', color: '#9333ea', stroke: '#6b21a8' },      // Фіолетовий
-    { file: 'Cherkaska.json', color: '#ea580c', stroke: '#c2410c' },      // Помаранчевий
-    { file: 'Kirovohradska.json', color: '#dc2626', stroke: '#991b1b' },   // Червоний
-    { file: 'Khmelnytska.json', color: '#0891b2', stroke: '#0e7490' },    // Бірюзовий (Циан)
-    { file: 'Ternopilska.json', color: '#db2777', stroke: '#9d174d' }     // Рожевий (Маджента)
+    { file: 'Kyivska.json', color: '#2563eb', stroke: '#1e40af' },
+    { file: 'Zhytomyrska.json', color: '#16a34a', stroke: '#15803d' },
+    { file: 'Vinnytska.json', color: '#9333ea', stroke: '#6b21a8' },
+    { file: 'Cherkaska.json', color: '#ea580c', stroke: '#c2410c' },
+    { file: 'Kirovohradska.json', color: '#dc2626', stroke: '#991b1b' },
+    // { file: 'Khmelnytska.json', color: '#0891b2', stroke: '#0e7490' },
+    // { file: 'Ternopilska.json', color: '#db2777', stroke: '#9d174d' },
+    { file: 'Sumska.json', color: '#2784db', stroke: '#174d9d' },
 ];
 
 function MapRecenter({ center }) {
