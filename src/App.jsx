@@ -41,9 +41,9 @@ const HROMADA_FILES = [
     { file: 'Vinnytska.json', color: '#9333ea', stroke: '#6b21a8' },
     { file: 'Cherkaska.json', color: '#ea580c', stroke: '#c2410c' },
     { file: 'Kirovohradska.json', color: '#dc2626', stroke: '#991b1b' },
-    // { file: 'Khmelnytska.json', color: '#0891b2', stroke: '#0e7490' },
-    // { file: 'Ternopilska.json', color: '#db2777', stroke: '#9d174d' },
-    { file: 'Sumska.json', color: '#2784db', stroke: '#174d9d' },
+    { file: 'Khmelnytska.json', color: '#0891b2', stroke: '#0e7490' },
+    { file: 'Ternopilska.json', color: '#db2777', stroke: '#9d174d' },
+    // { file: 'Sumska.json', color: '#2784db', stroke: '#174d9d' },
 ];
 
 function MapRecenter({ center }) {
